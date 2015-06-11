@@ -18,7 +18,7 @@ namespace OneworldTimeTableParser
     {
         public class CIFLight
         {
-            // Auto-implemented properties. 
+            // Auto-implemented properties 
             public string FromIATA;
             public string ToIATA;
             public DateTime FromDate;
