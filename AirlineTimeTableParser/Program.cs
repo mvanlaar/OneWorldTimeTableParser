@@ -65,21 +65,21 @@ namespace OneworldTimeTableParser
             // Formaat papaier 
             // Letter		 612x792
             // A4		     595x842
-            var links = new Rectangle(
+            var left = new Rectangle(
                         distanceInPixelsFromLeft,
                         distanceInPixelsFromBottom,
                         width,
                         height);
 
-            var rechts = new Rectangle(
+            var right = new Rectangle(
                        255,
                        distanceInPixelsFromBottom,
                        612,
                        height);
             
             
-            rectangles.Add(links);
-            rectangles.Add(rechts);
+            rectangles.Add(left);
+            rectangles.Add(right);
 
             // The PdfReader object implements IDisposable.Dispose, so you can
             // wrap it in the using keyword to automatically dispose of it
