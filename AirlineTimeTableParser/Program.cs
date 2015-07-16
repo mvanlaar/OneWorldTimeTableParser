@@ -41,6 +41,7 @@ namespace OneworldTimeTableParser
             public string FlightDuration;
             public Boolean FlightCodeShare;
             public Boolean FlightNextDayArrival;
+            public int FlightNextDays;
         }
 
         public static readonly List<string> _IATAAircraftCode = new List<string>() { "141", "142", "143", "146", "14F", "14X", "14Y", "14Z", "310", "312", "313", "318", "319", "31F", "31X", "31Y", "320", "321", "32S", "330", "332", "333", "340", "342", "343", "345", "346", "380", "38F", "703", "707", "70F", "70M", "717", "721", "722", "727", "72B", "72C", "72F", "72M", "72S", "72X", "72Y", "731", "732", "733", "734", "735", "736", "737", "738", "739", "73F", "73G", "73H", "73M", "73W", "73X", "73Y", "741", "742", "743", "744", "747", "74C", "74D", "74E", "74F", "74J", "74L", "74M", "74R", "74T", "74U", "74V", "74X", "74Y", "752", "753", "757", "75F", "75M", "762", "763", "764", "767", "76F", "76X", "76Y", "772", "773", "777", "A26", "A28", "A30", "A32", "A40", "A4F", "AB3", "AB4", "AB6", "ABB", "ABF", "ABX", "ABY", "ACD", "ACP", "ACT", "ALM", "AN4", "AN6", "AN7", "ANF", "APH", "AR1", "AR7", "AR8", "ARJ", "ARX", "AT4", "AT5", "AT7", "ATP", "ATR", "AX1", "AX8", "B11", "B12", "B13", "B14", "B15", "B72", "BE1", "BE2", "BEC", "BEH", "BEP", "BES", "BET", "BH2", "BNI", "BNT", "BUS", "CCJ", "CCX", "CD2", "CL4", "CN1", "CN2", "CNA", "CNC", "CNJ", "CNT", "CR1", "CR2", "CR7", "CR9", "CRJ", "CRV", "CS2", "CS5", "CV4", "CV5", "CVF", "CVR", "CVV", "CVX", "CVY", "CWC", "D10", "D11", "D1C", "D1F", "D1M", "D1X", "D1Y", "D28", "D38", "D3F", "D6F", "D8F", "D8L", "D8M", "D8Q", "D8T", "D8X", "D8Y", "D91", "D92", "D93", "D94", "D95", "D9C", "D9F", "D9F", "D9X", "DC3", "DC6", "DC8", "DC9", "DF2", "DF3", "DFL", "DH1", "DH2", "DH3", "DH4", "DH7", "DH8", "DHB", "DHC", "DHD", "DHH", "DHL", "DHO", "DHP", "DHR", "DHS", "DHT", "E70", "E90", "EM2", "EMB", "EMJ", "ER3", "ER4", "ERD", "ERJ", "F21", "F22", "F23", "F24", "F27", "F28", "F50", "F70", "FA7", "FK7", "FRJ", "GRG", "GRJ", "GRM", "GRS", "H25", "HEC", "HOV", "HS7", "I14", "I93", "I9F", "I9M", "I9X", "I9Y", "IL6", "IL7", "IL8", "IL9", "ILW", "J31", "J32", "J41", "JST", "JU5", "L10", "L11", "L15", "L1F", "L49", "L4T", "LCH", "LMO", "LOE", "LOF", "LOH", "LOM", "LRJ", "M11", "M1F", "M1M", "M80", "M81", "M82", "M83", "M87", "M88", "M90", "MBH", "MD9", "MIH", "MU2", "ND2", "NDC", "NDE", "NDH", "PA1", "PA2", "PAG", "PAT", "PL2", "PL6", "PN6", "RFS", "S20", "S58", "S61", "S76", "SF3", "SH3", "SH6", "SHB", "SHS", "SSC", "SWM", "T20", "TRN", "TU3", "TU5", "VCV", "WWP", "YK2", "YK4", "YN2", "YN7", "YS1" };
@@ -155,6 +156,7 @@ namespace OneworldTimeTableParser
                         string TEMP_Aircraftcode = null;
                         TimeSpan TEMP_DurationTime = TimeSpan.MinValue;
                         Boolean TEMP_FlightNextDayArrival = false;
+                        int TEMP_FlightNextDays = 0;
                         foreach (string line in lines)
                         {
                             string[] values = line.SplitWithQualifier(',', '\"', true);
@@ -253,6 +255,7 @@ namespace OneworldTimeTableParser
                                                         // Next day arrival
                                                         x = x.Replace("+1", "");
                                                         TEMP_FlightNextDayArrival = true;
+                                                        TEMP_FlightNextDays = 1;
                                                     }
                                                     DateTime.TryParse(s.Trim(), out TEMP_ArrivalTime);
                                                     //DateTime.TryParseExact(temp_string, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out TEMP_ArrivalTime);
@@ -310,7 +313,8 @@ namespace OneworldTimeTableParser
                                             FlightOperator = null,
                                             FlightDuration = TEMP_DurationTime.ToString(),
                                             FlightCodeShare = TEMP_FlightCodeShare,
-                                            FlightNextDayArrival = TEMP_FlightNextDayArrival
+                                            FlightNextDayArrival = TEMP_FlightNextDayArrival,
+                                            FlightNextDays = TEMP_FlightNextDays
                                         });
                                         // Cleaning All but From and To 
                                         TEMP_ValidFrom = new DateTime();
@@ -330,6 +334,7 @@ namespace OneworldTimeTableParser
                                         TEMP_DurationTime = TimeSpan.MinValue;
                                         TEMP_FlightCodeShare = false;
                                         TEMP_FlightNextDayArrival = false;
+                                        TEMP_FlightNextDays = 0;
                                     }
                                     if (temp_string.Contains("Operated by"))
                                     {
@@ -359,6 +364,7 @@ namespace OneworldTimeTableParser
                                         TEMP_DurationTime = TimeSpan.MinValue;
                                         TEMP_FlightCodeShare = false;
                                         TEMP_FlightNextDayArrival = false;
+                                        TEMP_FlightNextDays = 0;
                                     }
                                     //Console.WriteLine(value);
                                 }
@@ -417,6 +423,7 @@ namespace OneworldTimeTableParser
                         command.Parameters.Add(new SqlParameter("@FlightCodeShare", CIFLights[i].FlightCodeShare));
                         command.Parameters.Add(new SqlParameter("@FlightNextDayArrival", CIFLights[i].FlightNextDayArrival));
                         command.Parameters.Add(new SqlParameter("@FlightDuration", CIFLights[i].FlightDuration));
+                        command.Parameters.Add(new SqlParameter("@FlightNextDays", CIFLights[i].FlightNextDays));
                         foreach (SqlParameter parameter in command.Parameters)
                         {
                             if (parameter.Value == null)
