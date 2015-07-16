@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using PDFReader;
 using System.Globalization;
 using System.IO;
+using System.Data.SqlClient;
+using System.Data;
 
 namespace OneworldTimeTableParser
 {
@@ -36,7 +38,7 @@ namespace OneworldTimeTableParser
             public String FlightAirline;
             public String FlightOperator;
             public String FlightAircraft;
-            public DateTime FlightDuration;
+            public string FlightDuration;
             public Boolean FlightCodeShare;
             public Boolean FlightNextDayArrival;
         }
@@ -54,6 +56,7 @@ namespace OneworldTimeTableParser
             Regex rgxIATAAirport = new Regex(@"\(?[a-zA-Z]{3}\)"); // kan niet aan het begin staan kan ergens in de string staan dus geen $ op het einde.
             Regex rgxdate = new Regex(@"(([0-9])|([0-2][0-9])|([3][0-1]))(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"); // kan meerdere keren voorkomen in string
             Regex rgxFlightDay = new Regex(@"\d$");
+            Regex rgxFlightTime = new Regex(@"^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-9]|0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$");
             List<CIFLight> CIFLights = new List<CIFLight> { };
             List<Rectangle> rectangles = new List<Rectangle>();
 
@@ -150,7 +153,7 @@ namespace OneworldTimeTableParser
                         Boolean TEMP_FlightCodeShare = false;
                         string TEMP_FlightNumber = null;
                         string TEMP_Aircraftcode = null;
-                        DateTime TEMP_DurationTime = new DateTime();
+                        TimeSpan TEMP_DurationTime = TimeSpan.MinValue;
                         Boolean TEMP_FlightNextDayArrival = false;
                         foreach (string line in lines)
                         {
@@ -179,8 +182,7 @@ namespace OneworldTimeTableParser
 
                                                 string tempairport = rgxIATAAirport.Match(temp_string).Groups[0].Value;
                                                 tempairport = tempairport.Replace("(", "");
-                                                tempairport = tempairport.Replace(")", "");
-                                                TEMP_FromIATA = tempairport;
+                                                tempairport = tempairport.Replace(")", "");                                                
                                                 TEMP_ToIATA = tempairport;
                                             }
                                         }
@@ -281,10 +283,12 @@ namespace OneworldTimeTableParser
                                             TEMP_Aircraftcode = temp_string;
                                         }
                                     }
-                                    if (TEMP_Aircraftcode != null && DateTime.TryParseExact(temp_string, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out TEMP_DurationTime))
+                                    if (TEMP_Aircraftcode != null && rgxFlightTime.Matches(temp_string).Count > 0)
                                     {
                                         // Aircraft code is gevonden, dit moet nu de vlucht tijd zijn. En dus de laatste waarde in de reeks. 
-                                        TEMP_DurationTime = DateTime.ParseExact(temp_string, "HH:mm", null);
+                                        
+
+                                        TEMP_DurationTime = TimeSpan.ParseExact(temp_string, "g", ci);
                                         CIFLights.Add(new CIFLight
                                         {
                                             FromIATA = TEMP_FromIATA,
@@ -304,7 +308,7 @@ namespace OneworldTimeTableParser
                                             FlightSunday = TEMP_FlightSunday,
                                             FlightNumber = TEMP_FlightNumber,
                                             FlightOperator = null,
-                                            FlightDuration = TEMP_DurationTime,
+                                            FlightDuration = TEMP_DurationTime.ToString(),
                                             FlightCodeShare = TEMP_FlightCodeShare,
                                             FlightNextDayArrival = TEMP_FlightNextDayArrival
                                         });
@@ -323,13 +327,14 @@ namespace OneworldTimeTableParser
                                         TEMP_ArrivalTime = new DateTime();
                                         TEMP_FlightNumber = null;
                                         TEMP_Aircraftcode = null;
-                                        TEMP_DurationTime = new DateTime();
+                                        TEMP_DurationTime = TimeSpan.MinValue;
                                         TEMP_FlightCodeShare = false;
                                         TEMP_FlightNextDayArrival = false;
                                     }
                                     if (temp_string.Contains("Operated by"))
                                     {
                                         // Ok dit moet worden toegevoegd aan het vorige record.
+                                        CIFLights[CIFLights.Count - 1].FlightOperator = temp_string.Replace("Operated by and marketed by ", "");
                                         CIFLights[CIFLights.Count - 1].FlightOperator = temp_string.Replace("Operated by ", "");
                                         CIFLights[CIFLights.Count - 1].FlightCodeShare = true;
                                     }
@@ -351,7 +356,7 @@ namespace OneworldTimeTableParser
                                         TEMP_ArrivalTime = new DateTime();
                                         TEMP_FlightNumber = null;
                                         TEMP_Aircraftcode = null;
-                                        TEMP_DurationTime = new DateTime();
+                                        TEMP_DurationTime = TimeSpan.MinValue;
                                         TEMP_FlightCodeShare = false;
                                         TEMP_FlightNextDayArrival = false;
                                     }
@@ -371,6 +376,7 @@ namespace OneworldTimeTableParser
             // Console.WriteLine(text.ToString());
             
             // Write the list of objects to a file.
+            Console.WriteLine("Writing XML File...");
             System.Xml.Serialization.XmlSerializer writer =
             new System.Xml.Serialization.XmlSerializer(CIFLights.GetType());
             System.IO.StreamWriter file =
@@ -380,9 +386,60 @@ namespace OneworldTimeTableParser
             file.Close();
 
             //Console.ReadKey();
+            Console.WriteLine("Insert into Database...");
+            for (int i = 0; i < CIFLights.Count; i++) // Loop through List with for)
+            {
+                using (SqlConnection connection = new SqlConnection("Server=(local);Database=CI-Import;Trusted_Connection=True;"))
+                {
+                    using (SqlCommand command = new SqlCommand())
+                    {
+                        command.Connection = connection;            // <== lacking
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.CommandText = "InsertFlight";
+                        command.Parameters.Add(new SqlParameter("@FlightSource", "OneWorld"));
+                        command.Parameters.Add(new SqlParameter("@FromIATA", CIFLights[i].FromIATA));
+                        command.Parameters.Add(new SqlParameter("@ToIATA", CIFLights[i].ToIATA));
+                        command.Parameters.Add(new SqlParameter("@FromDate", CIFLights[i].FromDate));
+                        command.Parameters.Add(new SqlParameter("@ToDate", CIFLights[i].ToDate));
+                        command.Parameters.Add(new SqlParameter("@FlightMonday", CIFLights[i].FlightMonday));
+                        command.Parameters.Add(new SqlParameter("@FlightTuesday", CIFLights[i].FlightTuesday));
+                        command.Parameters.Add(new SqlParameter("@FlightWednesday", CIFLights[i].FlightWednesday));
+                        command.Parameters.Add(new SqlParameter("@FlightThursday", CIFLights[i].FlightThursday));
+                        command.Parameters.Add(new SqlParameter("@FlightFriday", CIFLights[i].FlightFriday));
+                        command.Parameters.Add(new SqlParameter("@FlightSaterday", CIFLights[i].FlightSaterday));
+                        command.Parameters.Add(new SqlParameter("@FlightSunday", CIFLights[i].FlightSunday));
+                        command.Parameters.Add(new SqlParameter("@DepartTime", CIFLights[i].DepartTime));
+                        command.Parameters.Add(new SqlParameter("@ArrivalTime", CIFLights[i].ArrivalTime));
+                        command.Parameters.Add(new SqlParameter("@FlightNumber", CIFLights[i].FlightNumber));
+                        command.Parameters.Add(new SqlParameter("@FlightAirline", CIFLights[i].FlightAirline));
+                        command.Parameters.Add(new SqlParameter("@FlightOperator", CIFLights[i].FlightOperator));
+                        command.Parameters.Add(new SqlParameter("@FlightAircraft", CIFLights[i].FlightAircraft));
+                        command.Parameters.Add(new SqlParameter("@FlightCodeShare", CIFLights[i].FlightCodeShare));
+                        command.Parameters.Add(new SqlParameter("@FlightNextDayArrival", CIFLights[i].FlightNextDayArrival));
+                        command.Parameters.Add(new SqlParameter("@FlightDuration", CIFLights[i].FlightDuration));
+                        foreach (SqlParameter parameter in command.Parameters)
+                        {
+                            if (parameter.Value == null)
+                            {
+                                parameter.Value = DBNull.Value;
+                            }
+                        }
 
 
+                        try
+                        {
+                            connection.Open();
+                            int recordsAffected = command.ExecuteNonQuery();
+                        }
 
+                        finally
+                        {
+                            connection.Close();
+                        }
+                    }
+                }
+
+            }
         }     
 
 
