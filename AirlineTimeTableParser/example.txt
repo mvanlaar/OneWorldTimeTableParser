@@ -18,4 +18,10 @@
 
 "- ","29May   2 ","3 ","4 ","5     ","16:50 18:05 ","BA8291* ","FRJ ","01:15 "
 
-regex: ^(([0-9])|([0-2][0-9])|([3][0-1]))\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\-\d{4}
+"FROM CALVI, FRANCE (CL","Y) "
+" ","TO: DUESSELDORF, GERMANY (DUS)  "
+" ","From-T","o ","Elapsed "
+"Validity ","Days    ","Dep ","Arr ","Flight ","Aircraft ","time "
+"19Sep ","-           ","6   ","08:25 10:15 ","AB8361 ","320 ","01:50 "
+"12Sep ","12Sep           ","6   ","09:25 11:15 ","AB8361 ","320 ","01:50 "
+"5Sep ","5Sep           ","6   ","09:45 11:35 ","AB8361 ","320 ","01:50 "

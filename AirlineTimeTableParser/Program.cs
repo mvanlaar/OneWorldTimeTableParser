@@ -13,49 +13,51 @@ using System.Globalization;
 using System.IO;
 using System.Data.SqlClient;
 using System.Data;
+using System.Net;
 
 namespace OneworldTimeTableParser
 {
-    public class Program
+    class Program
     {
-        public class CIFLight
-        {
-            // Auto-implemented properties 
-            public string FromIATA;
-            public string ToIATA;
-            public DateTime FromDate;
-            public DateTime ToDate;
-            public Boolean FlightMonday;
-            public Boolean FlightTuesday;
-            public Boolean FlightWednesday;
-            public Boolean FlightThursday;
-            public Boolean FlightFriday;
-            public Boolean FlightSaterday;
-            public Boolean FlightSunday;
-            public DateTime DepartTime;
-            public DateTime ArrivalTime;
-            public String FlightNumber;
-            public String FlightAirline;
-            public String FlightOperator;
-            public String FlightAircraft;
-            public string FlightDuration;
-            public Boolean FlightCodeShare;
-            public Boolean FlightNextDayArrival;
-            public int FlightNextDays;
-        }
-
+        
         public static readonly List<string> _IATAAircraftCode = new List<string>() { "141", "142", "143", "146", "14F", "14X", "14Y", "14Z", "310", "312", "313", "318", "319", "31F", "31X", "31Y", "320", "321", "32S", "330", "332", "333", "340", "342", "343", "345", "346", "380", "38F", "703", "707", "70F", "70M", "717", "721", "722", "727", "72B", "72C", "72F", "72M", "72S", "72X", "72Y", "731", "732", "733", "734", "735", "736", "737", "738", "739", "73F", "73G", "73H", "73M", "73W", "73X", "73Y", "741", "742", "743", "744", "747", "74C", "74D", "74E", "74F", "74J", "74L", "74M", "74R", "74T", "74U", "74V", "74X", "74Y", "752", "753", "757", "75F", "75M", "762", "763", "764", "767", "76F", "76X", "76Y", "772", "773", "777", "A26", "A28", "A30", "A32", "A40", "A4F", "AB3", "AB4", "AB6", "ABB", "ABF", "ABX", "ABY", "ACD", "ACP", "ACT", "ALM", "AN4", "AN6", "AN7", "ANF", "APH", "AR1", "AR7", "AR8", "ARJ", "ARX", "AT4", "AT5", "AT7", "ATP", "ATR", "AX1", "AX8", "B11", "B12", "B13", "B14", "B15", "B72", "BE1", "BE2", "BEC", "BEH", "BEP", "BES", "BET", "BH2", "BNI", "BNT", "BUS", "CCJ", "CCX", "CD2", "CL4", "CN1", "CN2", "CNA", "CNC", "CNJ", "CNT", "CR1", "CR2", "CR7", "CR9", "CRJ", "CRV", "CS2", "CS5", "CV4", "CV5", "CVF", "CVR", "CVV", "CVX", "CVY", "CWC", "D10", "D11", "D1C", "D1F", "D1M", "D1X", "D1Y", "D28", "D38", "D3F", "D6F", "D8F", "D8L", "D8M", "D8Q", "D8T", "D8X", "D8Y", "D91", "D92", "D93", "D94", "D95", "D9C", "D9F", "D9F", "D9X", "DC3", "DC6", "DC8", "DC9", "DF2", "DF3", "DFL", "DH1", "DH2", "DH3", "DH4", "DH7", "DH8", "DHB", "DHC", "DHD", "DHH", "DHL", "DHO", "DHP", "DHR", "DHS", "DHT", "E70", "E90", "EM2", "EMB", "EMJ", "ER3", "ER4", "ERD", "ERJ", "F21", "F22", "F23", "F24", "F27", "F28", "F50", "F70", "FA7", "FK7", "FRJ", "GRG", "GRJ", "GRM", "GRS", "H25", "HEC", "HOV", "HS7", "I14", "I93", "I9F", "I9M", "I9X", "I9Y", "IL6", "IL7", "IL8", "IL9", "ILW", "J31", "J32", "J41", "JST", "JU5", "L10", "L11", "L15", "L1F", "L49", "L4T", "LCH", "LMO", "LOE", "LOF", "LOH", "LOM", "LRJ", "M11", "M1F", "M1M", "M80", "M81", "M82", "M83", "M87", "M88", "M90", "MBH", "MD9", "MIH", "MU2", "ND2", "NDC", "NDE", "NDH", "PA1", "PA2", "PAG", "PAT", "PL2", "PL6", "PN6", "RFS", "S20", "S58", "S61", "S76", "SF3", "SH3", "SH6", "SHB", "SHS", "SSC", "SWM", "T20", "TRN", "TU3", "TU5", "VCV", "WWP", "YK2", "YK4", "YN2", "YN7", "YS1" };
 
         static void Main(string[] args)
         {
-            
+
+            // Downlaoding latest pdf from skyteam website
+            string path = AppDomain.CurrentDomain.BaseDirectory + "data\\oneworld.pdf";
+            string myDirdata = AppDomain.CurrentDomain.BaseDirectory + "\\data";
+            Directory.CreateDirectory(myDirdata);
+
+            Uri url = new Uri("http://www.trvlink.com/download/oneworld/oneworld.pdf");
+            const string ua = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+            const string referer = "http://www.oneworld.com/tools/downloadable-timetables";
+            if (!File.Exists(path))
+            {
+                WebRequest.DefaultWebProxy = null;
+                using (System.Net.WebClient wc = new WebClient())
+                {
+                    wc.Headers.Add("user-agent", ua);
+                    wc.Headers.Add("Referer", referer);
+                    wc.Proxy = null;
+                    Console.WriteLine("Downloading latest oneworld timetable pdf file...");
+                    wc.DownloadFile(url, path);
+                    Console.WriteLine("Download ready...");
+                }
+            }
+
+
+
             var text = new StringBuilder();
             CultureInfo ci = new CultureInfo("en-US");
-            string path = AppDomain.CurrentDomain.BaseDirectory + "data\\oneworld.pdf";
+            
             Regex rgxtime = new Regex(@"^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])$");
             Regex rgxFlightNumber = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?(\*)?$");
-            Regex rgxIATAAirport = new Regex(@"\(?[a-zA-Z]{3}\)"); // kan niet aan het begin staan kan ergens in de string staan dus geen $ op het einde.
-            Regex rgxdate = new Regex(@"(([0-9])|([0-2][0-9])|([3][0-1]))(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"); // kan meerdere keren voorkomen in string
+            Regex rgxIATAAirport = new Regex(@"\(?[a-zA-Z]{3}\)");
+            Regex rgxIATAAirportLine = new Regex(@"\(?[a-zA-Z]{2}\""\,\""[a-zA-Z]{1}\)");
+            Regex rgxdate = new Regex(@"(([0-9])|([0-2][0-9])|([3][0-1]))(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
+            Regex rgxdate2 = new Regex(@"(?:(((Jan(uary)?|Ma(r(ch)?|y)|Jul(y)?|Aug(ust)?|Oct(ober)?|Dec(ember)?)\ 31)|((Jan(uary)?|Ma(r(ch)?|y)|Apr(il)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)\ (0?[1-9]|([12]\d)|30))|(Feb(ruary)?\ (0?[1-9]|1\d|2[0-8]|(29(?=,\ ((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00)))))))\,\ ((1[6-9]|[2-9]\d)\d{2}))");
             Regex rgxFlightDay = new Regex(@"\d$");
             Regex rgxFlightTime = new Regex(@"^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-9]|0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$");
             List<CIFLight> CIFLights = new List<CIFLight> { };
@@ -64,11 +66,18 @@ namespace OneworldTimeTableParser
             //rectangles.Add(new Rectangle(x+(j*offset), (y+i*offset), offset, offset));
             float distanceInPixelsFromLeft = 0;
             float distanceInPixelsFromBottom = 0;
-            float width = 253;//pdfReader.GetPageSize(page).Width / 2; // 306 deelt niet naar helft? 
+            float width = 259;//pdfReader.GetPageSize(page).Width / 2; // 306 deelt niet naar helft? 
             float height = 792; // pdfReader.GetPageSize(page).Height;
             // Formaat papaier 
             // Letter		 612x792
             // A4		     595x842
+            var firstpage = new Rectangle(
+                        distanceInPixelsFromLeft,
+                        distanceInPixelsFromBottom,
+                        595,
+                        height);
+
+
             var left = new Rectangle(
                         distanceInPixelsFromLeft,
                         distanceInPixelsFromBottom,
@@ -93,17 +102,39 @@ namespace OneworldTimeTableParser
             
 
             using (var pdfReader = new PdfReader(path))
-            {                 
-                //float pageHeight = pdfReader.GetPageSize.Height;
+            {
+                ITextExtractionStrategy fpstrategy = new SimpleTextExtractionStrategy();
+
+                var fpcurrentText = PdfTextExtractor.GetTextFromPage(
+                    pdfReader,
+                    1,
+                    fpstrategy);
+
+                fpcurrentText =
+                    Encoding.UTF8.GetString(Encoding.Convert(
+                        Encoding.Default,
+                        Encoding.UTF8,
+                        Encoding.Default.GetBytes(fpcurrentText)));
+
+                MatchCollection matches = rgxdate2.Matches(fpcurrentText);
+
+                string validfrom = matches[0].Value;
+                string validto = matches[1].Value;
+
+                string TEMP_PageFromIATA = null;
+                string TEMP_PageToIATA = null;
+
+                DateTime ValidFrom = DateTime.ParseExact(validfrom, "MMMM d, yyyy", ci);
+                DateTime ValidTo = DateTime.ParseExact(validto, "MMMM d, yyyy", ci);
 
                 // Vaststellen valid from to date
-                DateTime ValidFrom = new DateTime(2015, 5, 22);
-                DateTime ValidTo = new DateTime(2015, 6, 19);
+                //DateTime ValidFrom = new DateTime(2015, 5, 22);
+                //DateTime ValidTo = new DateTime(2015, 6, 19);
                 
                 
                 // Loop through each page of the document
-                for (var page = 7; page <= pdfReader.NumberOfPages; page++)
-                //for (var page = 3; page <= pdfReader.NumberOfPages; page++)
+                for (var page = 3193; page <= 3193; page++)
+                //for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 {
 
                     Console.WriteLine("Parsing page {0}...", page);
@@ -159,7 +190,16 @@ namespace OneworldTimeTableParser
                         int TEMP_FlightNextDays = 0;
                         foreach (string line in lines)
                         {
-                            string[] values = line.SplitWithQualifier(',', '\"', true);
+                            string newline = line;
+                            // Bug Fixing From with split lines
+
+                            if (rgxIATAAirportLine.Matches(line).Count > 0)
+                            {
+                                newline = newline.Replace("\",\"", "");
+                            }
+
+
+                            string[] values = newline.SplitWithQualifier(',', '\"', true);
 
                             foreach (string value in values)
                             {
@@ -167,9 +207,10 @@ namespace OneworldTimeTableParser
                                 {
                                     // getrimde string temp value
                                     string temp_string = value.Trim();
-                                    // Van en Naar
+                                    // From and To
                                     if (rgxIATAAirport.Matches(temp_string).Count > 0)
                                     {
+                                        
                                         if (String.IsNullOrEmpty(TEMP_FromIATA))
                                         {
                                             string tempairport = rgxIATAAirport.Match(temp_string).Groups[0].Value;
@@ -366,7 +407,7 @@ namespace OneworldTimeTableParser
                                         TEMP_FlightNextDayArrival = false;
                                         TEMP_FlightNextDays = 0;
                                     }
-                                    //Console.WriteLine(value);
+                                   //  Console.WriteLine(value);
                                 }
                             }
                         }
@@ -383,6 +424,8 @@ namespace OneworldTimeTableParser
             
             // Write the list of objects to a file.
             Console.WriteLine("Writing XML File...");
+            string myDir = AppDomain.CurrentDomain.BaseDirectory + "\\output";
+            Directory.CreateDirectory(myDir);
             System.Xml.Serialization.XmlSerializer writer =
             new System.Xml.Serialization.XmlSerializer(CIFLights.GetType());
             System.IO.StreamWriter file =
@@ -452,5 +495,31 @@ namespace OneworldTimeTableParser
 
         
         
+    }
+
+    public class CIFLight
+    {
+        // Auto-implemented properties 
+        public string FromIATA;
+        public string ToIATA;
+        public DateTime FromDate;
+        public DateTime ToDate;
+        public Boolean FlightMonday;
+        public Boolean FlightTuesday;
+        public Boolean FlightWednesday;
+        public Boolean FlightThursday;
+        public Boolean FlightFriday;
+        public Boolean FlightSaterday;
+        public Boolean FlightSunday;
+        public DateTime DepartTime;
+        public DateTime ArrivalTime;
+        public String FlightNumber;
+        public String FlightAirline;
+        public String FlightOperator;
+        public String FlightAircraft;
+        public string FlightDuration;
+        public Boolean FlightCodeShare;
+        public Boolean FlightNextDayArrival;
+        public int FlightNextDays;
     }
 }
