@@ -66,7 +66,7 @@ namespace OneworldTimeTableParser
             //rectangles.Add(new Rectangle(x+(j*offset), (y+i*offset), offset, offset));
             float distanceInPixelsFromLeft = 0;
             float distanceInPixelsFromBottom = 0;
-            float width = 259;//pdfReader.GetPageSize(page).Width / 2; // 306 deelt niet naar helft? 
+            float width = 260;//pdfReader.GetPageSize(page).Width / 2; // 306 deelt niet naar helft? 
             float height = 792; // pdfReader.GetPageSize(page).Height;
             // Formaat papaier 
             // Letter		 612x792
@@ -85,9 +85,9 @@ namespace OneworldTimeTableParser
                         height);
 
             var right = new Rectangle(
-                       255,
+                       260,
                        distanceInPixelsFromBottom,
-                       612,
+                       640,
                        height);
             
             
@@ -133,7 +133,7 @@ namespace OneworldTimeTableParser
                 
                 
                 // Loop through each page of the document
-                for (var page = 3193; page <= 3193; page++)
+                for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 //for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 {
 
@@ -210,23 +210,28 @@ namespace OneworldTimeTableParser
                                     // From and To
                                     if (rgxIATAAirport.Matches(temp_string).Count > 0)
                                     {
-                                        
-                                        if (String.IsNullOrEmpty(TEMP_FromIATA))
+                                        if (temp_string.Contains("FROM") || temp_string.Contains("FROM:"))
                                         {
-                                            string tempairport = rgxIATAAirport.Match(temp_string).Groups[0].Value;
-                                            tempairport = tempairport.Replace("(", "");
-                                            tempairport = tempairport.Replace(")", "");
-                                            TEMP_FromIATA = tempairport;
-                                        }
-                                        else
-                                        {
-                                            if (String.IsNullOrEmpty(TEMP_ToIATA) && !String.IsNullOrEmpty(TEMP_FromIATA))
-                                            {
-
+                                            //if (String.IsNullOrEmpty(TEMP_FromIATA))
+                                            //{
                                                 string tempairport = rgxIATAAirport.Match(temp_string).Groups[0].Value;
                                                 tempairport = tempairport.Replace("(", "");
-                                                tempairport = tempairport.Replace(")", "");                                                
-                                                TEMP_ToIATA = tempairport;
+                                                tempairport = tempairport.Replace(")", "");
+                                                TEMP_FromIATA = tempairport;
+                                            //}
+                                        }
+                                        else 
+                                        {
+                                            if (temp_string.Contains("TO") || temp_string.Contains("TO:"))
+                                            {
+                                                //if (String.IsNullOrEmpty(TEMP_ToIATA) && !String.IsNullOrEmpty(TEMP_FromIATA))
+                                                //{
+
+                                                    string tempairport = rgxIATAAirport.Match(temp_string).Groups[0].Value;
+                                                    tempairport = tempairport.Replace("(", "");
+                                                    tempairport = tempairport.Replace(")", "");                                                
+                                                    TEMP_ToIATA = tempairport;
+                                                //}
                                             }
                                         }
                                     }
@@ -467,6 +472,8 @@ namespace OneworldTimeTableParser
                         command.Parameters.Add(new SqlParameter("@FlightNextDayArrival", CIFLights[i].FlightNextDayArrival));
                         command.Parameters.Add(new SqlParameter("@FlightDuration", CIFLights[i].FlightDuration));
                         command.Parameters.Add(new SqlParameter("@FlightNextDays", CIFLights[i].FlightNextDays));
+                        command.Parameters.Add(new SqlParameter("@FlightNonStop", true));
+                        command.Parameters.Add(new SqlParameter("@FlightVia", DBNull.Value));
                         foreach (SqlParameter parameter in command.Parameters)
                         {
                             if (parameter.Value == null)
