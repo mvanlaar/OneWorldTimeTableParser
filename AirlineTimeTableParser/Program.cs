@@ -133,7 +133,7 @@ namespace OneworldTimeTableParser
                 
                 
                 // Loop through each page of the document
-                for (var page = 6; page <= pdfReader.NumberOfPages; page++)
+                for (var page = 6755; page <= 6755; page++)
                 //for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 {
 
@@ -194,6 +194,11 @@ namespace OneworldTimeTableParser
                             // Bug Fixing From with split lines
 
                             if (rgxIATAAirportLine.Matches(line).Count > 0)
+                            {
+                                newline = newline.Replace("\",\"", "");
+                            }
+
+                            if (rgxIATAAirport.Matches(line).Count > 0 && line.Contains("FROM"))
                             {
                                 newline = newline.Replace("\",\"", "");
                             }
