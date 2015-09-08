@@ -56,6 +56,7 @@ namespace OneworldTimeTableParser
             Regex rgxFlightNumber = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?(\*)?$");
             Regex rgxIATAAirport = new Regex(@"\(?[a-zA-Z]{3}\)");
             Regex rgxIATAAirportLine = new Regex(@"\(?[a-zA-Z]{2}\""\,\""[a-zA-Z]{1}\)");
+            Regex rgxIATAAirportLine2 = new Regex(@"\(?[a-zA-Z]{1}\""\,\""[a-zA-Z]{2}\)");
             Regex rgxdate = new Regex(@"(([0-9])|([0-2][0-9])|([3][0-1]))(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
             Regex rgxdate2 = new Regex(@"(?:(((Jan(uary)?|Ma(r(ch)?|y)|Jul(y)?|Aug(ust)?|Oct(ober)?|Dec(ember)?)\ 31)|((Jan(uary)?|Ma(r(ch)?|y)|Apr(il)?|Ju((ly?)|(ne?))|Aug(ust)?|Oct(ober)?|(Sept|Nov|Dec)(ember)?)\ (0?[1-9]|([12]\d)|30))|(Feb(ruary)?\ (0?[1-9]|1\d|2[0-8]|(29(?=,\ ((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00)))))))\,\ ((1[6-9]|[2-9]\d)\d{2}))");
             Regex rgxFlightDay = new Regex(@"\d$");
@@ -133,7 +134,7 @@ namespace OneworldTimeTableParser
                 
                 
                 // Loop through each page of the document
-                for (var page = 6755; page <= 6755; page++)
+                for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 //for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 {
 
@@ -198,7 +199,17 @@ namespace OneworldTimeTableParser
                                 newline = newline.Replace("\",\"", "");
                             }
 
+                            if (rgxIATAAirportLine2.Matches(line).Count > 0)
+                            {
+                                newline = newline.Replace("\",\"", "");
+                            }
+
                             if (rgxIATAAirport.Matches(line).Count > 0 && line.Contains("FROM"))
+                            {
+                                newline = newline.Replace("\",\"", "");
+                            }
+
+                            if (rgxIATAAirport.Matches(line).Count > 0 && line.Contains("TO"))
                             {
                                 newline = newline.Replace("\",\"", "");
                             }
